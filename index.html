@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>NewsHub360 Ad Desk</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@700;900&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@500&display=swap" rel="stylesheet">
+<style>
+:root {
+  /* Layout idea: one column phone screen, a newsroom "ad desk" with four ad slots in a 2x2 grid, results as a wire-style report */
+  --paper: #eceef1;
+  --card: #ffffff;
+  --ink: #15181d;
+  --muted: #5d6470;
+  --rule: #c9ced6;
+  --accent: #1d4ed8;
+  --hit: #0f7a4a;
+  --miss: #a3a9b3;
+  --display: "Big Shoulders Display", "Arial Narrow", sans-serif;
+  --body: "IBM Plex Sans", system-ui, sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, monospace;
+  color-scheme: light;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; height: 100%; }
+body { background: var(--paper); color: var(--ink); font-family: var(--body); font-size: 16px; line-height: 1.45; }
+main { max-width: 520px; margin: 0 auto; padding: 18px 16px 32px; display: flex; flex-direction: column; gap: 18px; }
+header { display: flex; flex-direction: column; gap: 4px; border-bottom: 3px solid var(--ink); padding-bottom: 10px; }
+.kicker { font-family: var(--mono); font-size: 12px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+h1 { font-family: var(--display); font-weight: 900; font-size: 44px; line-height: .95; margin: 0; letter-spacing: .01em; text-wrap: balance; }
+h2 { font-family: var(--display); font-weight: 700; font-size: 26px; margin: 0; line-height: 1; }
+p { margin: 0; max-width: 62ch; }
+.muted { color: var(--muted); font-size: 14px; }
+.group { display: flex; flex-direction: column; gap: 8px; }
+.chips { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.chip { font: 600 15px var(--body); padding: 12px 8px; border: 2px solid var(--ink); background: var(--card); color: var(--ink); border-radius: 0; cursor: pointer; text-align: left; display: flex; flex-direction: column; gap: 2px; }
+.chip small { font-weight: 400; font-size: 12px; color: var(--muted); }
+.chip[aria-pressed="true"] { background: var(--ink); color: var(--card); }
+.chip[aria-pressed="true"] small { color: #c9ced6; }
+button:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+.primary { font: 700 20px var(--display); letter-spacing: .04em; text-transform: uppercase; padding: 14px; background: var(--accent); color: #fff; border: 0; cursor: pointer; }
+.primary:disabled { background: var(--miss); cursor: default; }
+.ghost { font: 600 15px var(--body); padding: 12px; background: transparent; border: 2px solid var(--ink); color: var(--ink); cursor: pointer; }
+.status { display: flex; justify-content: space-between; align-items: baseline; font-family: var(--mono); font-size: 14px; }
+.status b { font-family: var(--display); font-size: 34px; font-weight: 900; }
+.bar { height: 6px; background: var(--rule); }
+.bar span { display: block; height: 100%; background: var(--ink); transition: width .2s; }
+.ads { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.ad { position: relative; background: var(--card); border: 2px solid var(--ink); padding: 12px; min-height: 150px; display: flex; flex-direction: column; justify-content: space-between; text-align: left; cursor: pointer; font: inherit; color: inherit; }
+.ad:disabled { cursor: default; }
+.ad .letter { font-family: var(--display); font-weight: 900; font-size: 58px; line-height: .9; }
+.ad .tag { font-family: var(--mono); font-size: 11px; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); }
+.ad .stats { font-family: var(--mono); font-size: 13px; font-variant-numeric: tabular-nums; }
+.ad .flash { position: absolute; top: 10px; right: 10px; font: 700 13px var(--mono); padding: 3px 6px; opacity: 0; }
+.ad .flash.hit { background: var(--hit); color: #fff; opacity: 1; }
+.ad .flash.miss { background: var(--miss); color: #fff; opacity: 1; }
+.ad.pop { animation: pop .25s ease-out; }
+@keyframes pop { 50% { transform: scale(.97); } }
+.report { background: var(--card); border: 2px solid var(--ink); padding: 14px; display: flex; flex-direction: column; gap: 12px; }
+.big { display: flex; gap: 18px; flex-wrap: wrap; }
+.big div { display: flex; flex-direction: column; }
+.big b { font-family: var(--display); font-size: 40px; font-weight: 900; line-height: 1; font-variant-numeric: tabular-nums; }
+.big span { font-size: 13px; color: var(--muted); }
+table { width: 100%; border-collapse: collapse; font-size: 14px; font-variant-numeric: tabular-nums; }
+th, td { text-align: left; padding: 6px 4px; border-bottom: 1px solid var(--rule); }
+th { font-family: var(--mono); font-size: 11px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); font-weight: 500; }
+td.num, th.num { text-align: right; }
+tr.best td { font-weight: 600; }
+.meter { height: 10px; background: var(--paper); min-width: 60px; }
+.meter span { display: block; height: 100%; background: var(--ink); }
+tr.you .meter span { background: var(--accent); }
+.note { font-size: 13px; color: var(--muted); border-left: 3px solid var(--accent); padding-left: 10px; }
+.row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+[hidden] { display: none !important; }
+@media (prefers-reduced-motion: reduce) { .ad.pop { animation: none; } .bar span { transition: none; } }
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <span class="kicker">EBC4255 · Assignment 3 warm-up</span>
+    <h1>NewsHub360 Ad Desk</h1>
+    <p class="muted">Four ads, 20 impressions. Get as many clicks as you can.</p>
+  </header>
+
+  <!-- Setup screen -->
+  <section id="setup" class="group" style="gap:16px">
+    <div class="group">
+      <h2>Your team</h2>
+      <div class="chips" id="teamChips"></div>
+    </div>
+    <div class="group">
+      <h2>Round</h2>
+      <div class="chips" id="roundChips"></div>
+      <p class="muted">Play the round the presenter announces.</p>
+    </div>
+    <button class="primary" id="startBtn" disabled>Start round</button>
+    <p class="note">Every phone gets the ads in a different order, so copying your neighbour won't help. Click rates are scaled up about 10x from the assignment so you actually see clicks in 20 tries.</p>
+  </section>
+
+  <!-- Game screen -->
+  <section id="game" class="group" hidden style="gap:12px">
+    <div class="status"><span id="roundLabel">Round 1</span><span><b id="clicksNow">0</b> clicks</span></div>
+    <div class="status"><span id="pullsLeft">20 impressions left</span><span id="teamLabel"></span></div>
+    <div class="bar"><span id="progress" style="width:0%"></span></div>
+    <div class="ads" id="ads"></div>
+    <p class="muted">Tap an ad to show it to the next reader. Green means they clicked.</p>
+  </section>
+
+  <!-- Results screen -->
+  <section id="results" class="group" hidden style="gap:14px">
+    <div class="report">
+      <span class="kicker" id="resKicker">Round result</span>
+      <div class="big">
+        <div><b id="resClicks">0</b><span>your clicks</span></div>
+        <div><b id="resExp">0</b><span>clicks your choices were worth on average</span></div>
+        <div><b id="resBestPulls">0</b><span>of 20 on the best ad</span></div>
+      </div>
+      <p class="muted">Your clicks include luck. "Worth on average" is the expected clicks of the ads you picked, which is the fair way to compare with the bots.</p>
+    </div>
+
+    <div class="report">
+      <h2>You vs the policies</h2>
+      <p class="muted">Each policy played these same four ads for 20 impressions, 2,000 times. Shown: average expected clicks.</p>
+      <table id="vsTable"><thead><tr><th>Player</th><th class="num">Clicks</th><th class="num">Regret</th><th></th></tr></thead><tbody></tbody></table>
+      <p class="note">Regret = clicks from always showing the best ad minus clicks you got on average. Lower is better.</p>
+    </div>
+
+    <div class="report">
+      <h2>The hidden click rates</h2>
+      <table id="truthTable"><thead><tr><th>Ad on your phone</th><th class="num">True rate</th><th class="num">Shown</th><th class="num">Clicked</th></tr></thead><tbody></tbody></table>
+    </div>
+
+    <div class="row">
+      <button class="ghost" id="againBtn">Replay this round</button>
+      <button class="primary" id="nextBtn">Next round</button>
+    </div>
+  </section>
+</main>
+
+<script>
+// Round set-ups: assignment scenarios a, b, c with click rates scaled ~10x
+const ROUNDS = [
+  { name: "Round 1", sub: "Scenario a", rates: [0.30, 0.11, 0.13, 0.13] },
+  { name: "Round 2", sub: "Scenario b", rates: [0.30, 0.28, 0.13, 0.13] },
+  { name: "Round 3", sub: "Scenario c", rates: [0.60, 0.28, 0.13, 0.13] }
+];
+const TEAMS = ["Team 1", "Team 2"];
+const PULLS = 20;
+const LETTERS = ["A", "B", "C", "D"];
+
+let state = { team: null, round: null, phase: "setup", rates: [], shown: [0,0,0,0], clicks: [0,0,0,0], pulls: 0, expected: 0 };
+
+const $ = id => document.getElementById(id);
+
+// ---------- setup screen ----------
+function chip(label, sub, pressed, onClick) {
+  const b = document.createElement("button");
+  b.className = "chip"; b.type = "button";
+  b.setAttribute("aria-pressed", pressed ? "true" : "false");
+  b.innerHTML = label + (sub ? "<small>" + sub + "</small>" : "");
+  b.addEventListener("click", onClick);
+  return b;
+}
+function renderSetup() {
+  $("teamChips").style.gridTemplateColumns = "repeat(" + TEAMS.length + ", 1fr)";
+  $("teamChips").replaceChildren(...TEAMS.map((t, i) => chip(t, "", state.team === i, () => { state.team = i; renderSetup(); })));
+  $("roundChips").replaceChildren(...ROUNDS.map((r, i) => chip(r.name, r.sub, state.round === i, () => { state.round = i; renderSetup(); })));
+  $("startBtn").disabled = state.team === null || state.round === null;
+}
+
+// Shuffle the four rates so every phone has a different order
+function shuffled(arr) {
+  const a = arr.slice();
+  for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; }
+  return a;
+}
+
+function startRound() {
+  state.rates = shuffled(ROUNDS[state.round].rates);
+  state.shown = [0,0,0,0]; state.clicks = [0,0,0,0]; state.pulls = 0; state.expected = 0;
+  state.phase = "game";
+  render();
+}
+
+// ---------- game screen ----------
+function renderGame() {
+  $("roundLabel").textContent = ROUNDS[state.round].name;
+  $("teamLabel").textContent = TEAMS[state.team];
+  $("clicksNow").textContent = sum(state.clicks);
+  $("pullsLeft").textContent = (PULLS - state.pulls) + " impressions left";
+  $("progress").style.width = (100 * state.pulls / PULLS) + "%";
+  const ads = $("ads");
+  if (ads.children.length !== 4) {
+    ads.replaceChildren(...LETTERS.map((L, i) => {
+      const b = document.createElement("button");
+      b.className = "ad"; b.type = "button"; b.id = "ad" + L;
+      b.innerHTML = '<span class="flash"></span><span class="tag">Ad slot</span><span class="letter">' + L + '</span><span class="stats"></span>';
+      b.addEventListener("click", () => pull(i));
+      return b;
+    }));
+  }
+  LETTERS.forEach((L, i) => {
+    const n = state.shown[i], c = state.clicks[i];
+    $("ad" + L).querySelector(".stats").textContent = n === 0 ? "not shown yet" : c + " / " + n + " clicked";
+  });
+}
+
+function pull(i) {
+  if (state.pulls >= PULLS) return;
+  const clicked = Math.random() < state.rates[i];
+  state.shown[i]++; state.clicks[i] += clicked ? 1 : 0;
+  state.pulls++; state.expected += state.rates[i];
+  renderGame();
+  const card = $("ad" + LETTERS[i]);
+  const flash = card.querySelector(".flash");
+  document.querySelectorAll(".ad .flash").forEach(f => { f.className = "flash"; });
+  flash.className = "flash " + (clicked ? "hit" : "miss");
+  flash.textContent = clicked ? "CLICK" : "no click";
+  card.classList.remove("pop"); void card.offsetWidth; card.classList.add("pop");
+  if (state.pulls >= PULLS) {
+    document.querySelectorAll(".ad").forEach(b => b.disabled = true);
+    setTimeout(() => { state.phase = "results"; render(); }, 700);
+  }
+}
+
+// ---------- the policies, simulated on the same four ads ----------
+function betaSample(a, b) { const x = gammaSample(a), y = gammaSample(b); return x / (x + y); }
+function gammaSample(k) { // Marsaglia-Tsang, k >= 1 here
+  const d = k - 1 / 3, c = 1 / Math.sqrt(9 * d);
+  while (true) {
+    let x, v;
+    do { x = normal(); v = 1 + c * x; } while (v <= 0);
+    v = v * v * v; const u = Math.random();
+    if (Math.log(u) < 0.5 * x * x + d - d * v + d * Math.log(v)) return d * v;
+  }
+}
+function normal() { let u = 0, v = 0; while (u === 0) u = Math.random(); while (v === 0) v = Math.random(); return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v); }
+function argmaxRandomTie(vals) {
+  const m = Math.max(...vals); const idx = vals.map((v, i) => v === m ? i : -1).filter(i => i >= 0);
+  return idx[Math.floor(Math.random() * idx.length)];
+}
+// Returns the average expected clicks of a policy over many runs of PULLS impressions
+function simulate(policy, rates, runs) {
+  let total = 0;
+  for (let r = 0; r < runs; r++) {
+    const n = [0,0,0,0], w = [0,0,0,0];
+    for (let t = 0; t < PULLS; t++) {
+      let a;
+      if (policy === "random") a = Math.floor(Math.random() * 4);
+      else if (policy === "thompson") a = argmaxRandomTie(n.map((ni, i) => betaSample(1 + w[i], 1 + ni - w[i])));
+      else { // epsilon-greedy with epsilon = policy
+        a = Math.random() < policy ? Math.floor(Math.random() * 4) : argmaxRandomTie(n.map((ni, i) => ni ? w[i] / ni : 0));
+      }
+      const clicked = Math.random() < rates[a];
+      n[a]++; w[a] += clicked ? 1 : 0; total += rates[a];
+    }
+  }
+  return total / runs;
+}
+
+// ---------- results screen ----------
+function renderResults() {
+  const rates = state.rates, best = Math.max(...rates), bestIdx = rates.indexOf(best);
+  const optimum = PULLS * best;
+  $("resKicker").textContent = ROUNDS[state.round].name + " · " + TEAMS[state.team];
+  $("resClicks").textContent = sum(state.clicks);
+  $("resExp").textContent = state.expected.toFixed(1);
+  $("resBestPulls").textContent = state.shown[bestIdx];
+
+  const rows = [
+    { name: "You", v: state.expected, you: true },
+    { name: "Thompson sampling", v: simulate("thompson", rates, 2000) },
+    { name: "ε-greedy, ε = 0.1", v: simulate(0.1, rates, 2000) },
+    { name: "Random", v: simulate("random", rates, 2000) },
+    { name: "Always the best ad", v: optimum }
+  ];
+  $("vsTable").querySelector("tbody").replaceChildren(...rows.map(r => {
+    const tr = document.createElement("tr"); if (r.you) tr.className = "you";
+    tr.innerHTML = "<td>" + r.name + "</td><td class='num'>" + r.v.toFixed(1) + "</td><td class='num'>" + (optimum - r.v).toFixed(1) +
+      "</td><td><div class='meter'><span style='width:" + (100 * r.v / optimum).toFixed(0) + "%'></span></div></td>";
+    return tr;
+  }));
+  $("truthTable").querySelector("tbody").replaceChildren(...LETTERS.map((L, i) => {
+    const tr = document.createElement("tr"); if (i === bestIdx) tr.className = "best";
+    tr.innerHTML = "<td>Ad " + L + (i === bestIdx ? " (best)" : "") + "</td><td class='num'>" + Math.round(rates[i] * 100) + "%</td><td class='num'>" +
+      state.shown[i] + "</td><td class='num'>" + state.clicks[i] + "</td>";
+    return tr;
+  }));
+  $("nextBtn").hidden = state.round >= ROUNDS.length - 1;
+}
+
+function sum(a) { return a.reduce((x, y) => x + y, 0); }
+
+function render() {
+  $("setup").hidden = state.phase !== "setup";
+  $("game").hidden = state.phase !== "game";
+  $("results").hidden = state.phase !== "results";
+  if (state.phase === "setup") renderSetup();
+  if (state.phase === "game") { renderGame(); document.querySelectorAll(".ad").forEach(b => b.disabled = state.pulls >= PULLS); }
+  if (state.phase === "results") renderResults();
+  window.scrollTo(0, 0);
+}
+
+$("startBtn").addEventListener("click", startRound);
+$("againBtn").addEventListener("click", startRound);
+$("nextBtn").addEventListener("click", () => { state.round++; startRound(); });
+
+// Keep a player's place if the page is republished mid-session
+function start(saved) {
+  if (saved && saved.phase) state = Object.assign(state, saved);
+  render();
+}
+window.claude?.hot?.snapshot?.(() => state);
+window.claude?.hot?.ready ? window.claude.hot.ready(start) : start(window.claude?.hot?.data ?? {});
+</script>
+</body>
+</html>
