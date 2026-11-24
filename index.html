@@ -80,9 +80,8 @@ tr.you .meter span { background: var(--accent); }
 <body>
 <main>
   <header>
-    <span class="kicker">EBC4255 · Assignment 3 warm-up</span>
     <h1>NewsHub360 Ad Desk</h1>
-    <p class="muted">Four ads, 20 impressions. Get as many clicks as you can.</p>
+    <p class="muted">Four ads, 20 readers. Get as many clicks as you can.</p>
   </header>
 
   <!-- Setup screen -->
@@ -94,19 +93,17 @@ tr.you .meter span { background: var(--accent); }
     <div class="group">
       <h2>Round</h2>
       <div class="chips" id="roundChips"></div>
-      <p class="muted">Play the round the presenter announces.</p>
     </div>
     <button class="primary" id="startBtn" disabled>Start round</button>
-    <p class="note">Every phone gets the ads in a different order, so copying your neighbour won't help. Click rates are scaled up about 10x from the assignment so you actually see clicks in 20 tries.</p>
   </section>
 
   <!-- Game screen -->
   <section id="game" class="group" hidden style="gap:12px">
     <div class="status"><span id="roundLabel">Round 1</span><span><b id="clicksNow">0</b> clicks</span></div>
-    <div class="status"><span id="pullsLeft">20 impressions left</span><span id="teamLabel"></span></div>
+    <div class="status"><span id="pullsLeft">20 readers left</span><span id="teamLabel"></span></div>
     <div class="bar"><span id="progress" style="width:0%"></span></div>
     <div class="ads" id="ads"></div>
-    <p class="muted">Tap an ad to show it to the next reader. Green means they clicked.</p>
+    <p class="muted">Tap an ad for each reader. Green = click.</p>
   </section>
 
   <!-- Results screen -->
@@ -115,17 +112,16 @@ tr.you .meter span { background: var(--accent); }
       <span class="kicker" id="resKicker">Round result</span>
       <div class="big">
         <div><b id="resClicks">0</b><span>your clicks</span></div>
-        <div><b id="resExp">0</b><span>clicks your choices were worth on average</span></div>
+        <div><b id="resExp">0</b><span>your choices were worth on average</span></div>
         <div><b id="resBestPulls">0</b><span>of 20 on the best ad</span></div>
       </div>
-      <p class="muted">Your clicks include luck. "Worth on average" is the expected clicks of the ads you picked, which is the fair way to compare with the bots.</p>
     </div>
 
     <div class="report">
       <h2>You vs the policies</h2>
-      <p class="muted">Each policy played these same four ads for 20 impressions, 2,000 times. Shown: average expected clicks.</p>
+      <p class="muted">The bots played the same four ads 2,000 times. Average clicks shown.</p>
       <table id="vsTable"><thead><tr><th>Player</th><th class="num">Clicks</th><th class="num">Regret</th><th></th></tr></thead><tbody></tbody></table>
-      <p class="note">Regret = clicks from always showing the best ad minus clicks you got on average. Lower is better.</p>
+      <p class="note">Regret = clicks lost vs always showing the best ad. Lower is better.</p>
     </div>
 
     <div class="report">
@@ -167,7 +163,7 @@ function chip(label, sub, pressed, onClick) {
 function renderSetup() {
   $("teamChips").style.gridTemplateColumns = "repeat(" + TEAMS.length + ", 1fr)";
   $("teamChips").replaceChildren(...TEAMS.map((t, i) => chip(t, "", state.team === i, () => { state.team = i; renderSetup(); })));
-  $("roundChips").replaceChildren(...ROUNDS.map((r, i) => chip(r.name, r.sub, state.round === i, () => { state.round = i; renderSetup(); })));
+  $("roundChips").replaceChildren(...ROUNDS.map((r, i) => chip(r.name, "", state.round === i, () => { state.round = i; renderSetup(); })));
   $("startBtn").disabled = state.team === null || state.round === null;
 }
 
@@ -190,14 +186,14 @@ function renderGame() {
   $("roundLabel").textContent = ROUNDS[state.round].name;
   $("teamLabel").textContent = TEAMS[state.team];
   $("clicksNow").textContent = sum(state.clicks);
-  $("pullsLeft").textContent = (PULLS - state.pulls) + " impressions left";
+  $("pullsLeft").textContent = (PULLS - state.pulls) + " readers left";
   $("progress").style.width = (100 * state.pulls / PULLS) + "%";
   const ads = $("ads");
   if (ads.children.length !== 4) {
     ads.replaceChildren(...LETTERS.map((L, i) => {
       const b = document.createElement("button");
       b.className = "ad"; b.type = "button"; b.id = "ad" + L;
-      b.innerHTML = '<span class="flash"></span><span class="tag">Ad slot</span><span class="letter">' + L + '</span><span class="stats"></span>';
+      b.innerHTML = '<span class="flash"></span><span class="letter">' + L + '</span><span class="stats"></span>';
       b.addEventListener("click", () => pull(i));
       return b;
     }));
